@@ -18,7 +18,7 @@ public class CreditCard
 
     [Column(TypeName = "varchar(4)")]
     [StringLength(4, MinimumLength = 4)]
-    [RegularExpression(@"^\d{}$")]
+    [RegularExpression(@"^\d{4}$")]
     public string Last4Number { get; set; } = string.Empty;
 
     [Column(TypeName = "decimal(18,2)")]

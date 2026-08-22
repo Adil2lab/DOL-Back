@@ -4,7 +4,7 @@ namespace DOL.Models;
 
 public class User
 {
-    public Guid Id { get; set; } = new Guid();
+    public Guid Id { get; set; } = Guid.NewGuid();
 
     [Required, MaxLength(255)] public string Email { get; set; } = string.Empty;
 
