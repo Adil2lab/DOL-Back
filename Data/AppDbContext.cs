@@ -10,6 +10,7 @@ public class AppDbContext : DbContext
     public DbSet<User> Users => Set<User>();
     public DbSet<PaymentToken> PaymentTokens => Set<PaymentToken>();
     public DbSet<LedgerEntry> LedgerEntries => Set<LedgerEntry>();
+    public DbSet<CreditCard> CreditCards => Set<CreditCard>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
