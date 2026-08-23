@@ -8,11 +8,17 @@ namespace DOL.Controllers;
 [ApiController]
 public class UserController : ControllerBase
 {
-    private static User Dummy = new User();
+    private readonly static User Dummy = new() { Email = "dummy@generic.com", PassHash = "hHt$uu3hgatv3b4" };
 
-    [HttpGet]
+    [HttpGet("GetUserById")]
     public async Task<ActionResult<User>> GetUserById()
     {
         return await Task.FromResult(Ok(Dummy));
+    }
+
+    [HttpGet("GetRandomUser")]
+    public async Task<ActionResult<User>> GetUser()
+    {
+        return await Task.FromResult(Ok(new User { Email = "dummy@generic.com", PassHash = "hHt$uu3hgatv3b4" }));
     }
 }
