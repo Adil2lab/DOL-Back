@@ -6,7 +6,7 @@ namespace DOL.Services;
 public interface IPassService
 {
     string HashPass(User user, string password);
-    bool VerifyPass(User user, string hashedPassword, string password);
+    (bool success, bool needsRehash) VerifyPass(User user, string hashedPassword, string password);
 }
 
 public class PassService : IPassService
@@ -17,9 +17,12 @@ public class PassService : IPassService
         return _hasher.HashPassword(user, password);
     }
 
-    public bool VerifyPass(User user, string hashedPassword, string password)
+    public (bool success, bool needsRehash) VerifyPass(User user, string hashedPassword, string password)
     {
         var result = _hasher.VerifyHashedPassword(user, hashedPassword, password);
-        return result == PasswordVerificationResult.Success;
+        return (
+            success: result != PasswordVerificationResult.Failed,
+            needsRehash: result == PasswordVerificationResult.SuccessRehashNeeded
+            );
     }
 }
