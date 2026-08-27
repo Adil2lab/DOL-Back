@@ -29,6 +29,12 @@ public class User
     [Required]
     public string PassHash { get; set; } = string.Empty;
 
+    [Required]
+    public string Nid { get; set; } = string.Empty;
+
+    [Required, MaxLength(255)]
+    public string MobileNumber { get; set; } = string.Empty;
+
     /// <summary>
     /// Indicates whether this user is registered as a merchant.
     /// </summary>
@@ -38,6 +44,8 @@ public class User
     /// UTC timestamp indicating when the account was created.
     /// </summary>
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    public DateTime LoggedInAt { get; set; } = DateTime.UtcNow;
 
     /// <summary>
     /// Navigation property: collection of payment tokens associated with the user
