@@ -29,14 +29,19 @@ public class AuthController : ControllerBase
     {
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == email);
 
-        if (user == null) return await Task.FromResult(NotFound(new { error = "No email found" }));
+        if (user == null) return NotFound(new { error = "No email found" });
         return Ok(new UserResponse(user.Id, user.Email, user.Nid, user.IsMerchant));
     }
 
     [HttpPost("login")]
-    public async Task<ActionResult<UserResponse>> LoginRequest([FromBody] LoginRequest data)
+    public async Task<ActionResult<LoginResponse>> LoginRequest([FromBody] LoginRequest data)
     {
-        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == data.email);
+        if (string.IsNullOrEmpty(data.email) && string.IsNullOrEmpty(data.number))
+        {
+            return BadRequest(new {error = "There's no Email or Phone number."});
+        }
+
+        var user = await _db.Users.FirstOrDefaultAsync(u => (!string.IsNullOrEmpty(data.email) && u.Email == data.email) || (!string.IsNullOrEmpty(data.number) && u.MobileNumber == data.number));
 
         if (user == null) return Unauthorized(new { error = "Problem in the email or password" });
 
@@ -61,12 +66,12 @@ public class AuthController : ControllerBase
         return Ok(new LoginResponse(token, expiresAt));
     }
 
-    [HttpPost]
+    [HttpPost("register")]
     public async Task<ActionResult<UserResponse>> RegisterUser([FromBody] RegisterRequest data)
     {
         var existing = await _db.Users.FirstOrDefaultAsync(u => u.Email == data.email);
 
-        if (existing != null) return BadRequest(new { error = "Wrong Credential Given" });
+        if (existing != null) return Conflict(new { error = "User could not be registered with the provided details" });
 
         var user = new User { Email = data.email, MobileNumber = data.number, Nid = data.nid};
         user.PassHash = _passService.HashPass(user, data.pass);
@@ -74,6 +79,6 @@ public class AuthController : ControllerBase
         _db.Users.Add(user);
         await _db.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(RegisterUser), new { email = user.Email}, new UserResponse(user.Id, user.Email, user.Nid, user.IsMerchant));
+        return CreatedAtAction(nameof(GetUserByEmail), new { email = user.Email}, new UserResponse(user.Id, user.Email, user.Nid, user.IsMerchant));
     }
 }
