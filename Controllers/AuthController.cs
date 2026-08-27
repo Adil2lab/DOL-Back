@@ -14,11 +14,13 @@ public class AuthController : ControllerBase
 {
     private readonly AppDbContext _db;
     private readonly IPassService _passService;
+    private readonly ITokenService _tokenService;
 
-    public AuthController(AppDbContext db, IPassService passService)
+    public AuthController(AppDbContext db, IPassService passService, ITokenService tokenService)
     {
         _db = db;
         _passService = passService;
+        _tokenService = tokenService;
     }
 
     [Authorize(Roles = "Admin")]
@@ -45,13 +47,18 @@ public class AuthController : ControllerBase
             return Unauthorized(new { error = "Problem in the email or password" });
         }
 
+        user.LoggedInAt = DateTime.UtcNow;
+
         if (pass.needsRehash)
         {
             user.PassHash = _passService.HashPass(user, data.pass);
-            await _db.SaveChangesAsync();
         }
 
-        return Ok(new UserResponse(user.Id, user.Email, user.Nid, user.IsMerchant));
+        await _db.SaveChangesAsync();
+
+        (string token, DateTime expiresAt) = _tokenService.GenAccessToken(user);
+
+        return Ok(new LoginResponse(token, expiresAt));
     }
 
     [HttpPost]
