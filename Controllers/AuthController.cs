@@ -62,7 +62,9 @@ public class AuthController : ControllerBase
         (string token, DateTime expiresAt) = _tokenService.GenAccessToken(user);
         var rawRefreshToken = _tokenService.GenRefreshTokenRaw();
 
-        var refreshToken = await _db.RefreshTokens.FirstOrDefaultAsync(t => t.UserId == user.Id);
+        var refreshToken = await _db.RefreshTokens
+            .Include(t => t.User)
+            .FirstOrDefaultAsync(t => t.UserId == user.Id);
         if (refreshToken == null)
         {
             _db.RefreshTokens.Add(new RefreshToken
@@ -94,14 +96,34 @@ public class AuthController : ControllerBase
         return Ok(new LoginResponse(token, expiresAt));
     }
 
+    [HttpPost("refresh")]
+    public async Task<ActionResult<LoginResponse>> Refresh()
+    {
+        if (!Request.Cookies.TryGetValue("refreshToken", out var rawToken) || rawToken == null)
+            return Unauthorized(new { error = "No refresh token provided" });
+
+        string tokenHash = _tokenService.HashToken(rawToken);
+
+        RefreshToken? storedToken = await _db.RefreshTokens
+            .Include(t => t.User)
+            .FirstOrDefaultAsync(t => t.HashedToken == tokenHash && !t.Revoked);
+
+        if (storedToken == null || storedToken.ExpiredAt < DateTime.UtcNow || storedToken.User == null)
+            return Unauthorized(new { error = "Invalid or expired refresh token" });
+
+        var (accessToken, expiresAt) = _tokenService.GenAccessToken(storedToken.User);
+
+        return new LoginResponse(accessToken, expiresAt);
+    }
+
     [HttpPost("register")]
     public async Task<ActionResult<UserResponse>> RegisterUser([FromBody] RegisterRequest data)
     {
-        var existing = await _db.Users.FirstOrDefaultAsync(u => u.Email == data.email);
+        User? existing = await _db.Users.FirstOrDefaultAsync(u => u.Email == data.email || u.MobileNumber == data.number);
 
-        if (existing != null) return Conflict(new { error = "User could not be registered with the provided details" });
+        if (existing != null || data.pass == null) return Conflict(new { error = "User could not be registered with the provided details" });
 
-        var user = new User { Email = data.email, MobileNumber = data.number, Nid = data.nid};
+        User user = new() { Email = data.email, MobileNumber = data.number, Nid = data.nid};
         user.PassHash = _passService.HashPass(user, data.pass);
 
         _db.Users.Add(user);
