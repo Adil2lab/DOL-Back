@@ -2,6 +2,7 @@
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace DOL.Services;
@@ -9,6 +10,10 @@ namespace DOL.Services;
 public interface ITokenService
 {
     (string token, DateTime expiresAt) GenAccessToken(User user);
+
+    string GenRefreshTokenRaw();
+    string HashToken(string rawToken);
+
 }
 
 public class TokenService : ITokenService
@@ -24,7 +29,7 @@ public class TokenService : ITokenService
 
     public (string token, DateTime expiresAt) GenAccessToken(User user)
     {
-        DateTime expiresAt = DateTime.UtcNow.AddMinutes(15);
+        DateTime expiresAt = DateTime.UtcNow.AddMinutes(4);
 
         var claims = new[] {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
@@ -44,5 +49,17 @@ public class TokenService : ITokenService
         );
 
         return (new JwtSecurityTokenHandler().WriteToken(token), expiresAt);
+    }
+
+    public string HashToken(string rawToken)
+    {
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(rawToken));
+        return Convert.ToBase64String(bytes);
+    }
+
+    public string GenRefreshTokenRaw()
+    {
+        var bytes = RandomNumberGenerator.GetBytes(64);
+        return Convert.ToBase64String(bytes);
     }
 }

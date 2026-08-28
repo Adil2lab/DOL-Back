@@ -59,9 +59,37 @@ public class AuthController : ControllerBase
             user.PassHash = _passService.HashPass(user, data.pass);
         }
 
+        (string token, DateTime expiresAt) = _tokenService.GenAccessToken(user);
+        var rawRefreshToken = _tokenService.GenRefreshTokenRaw();
+
+        var refreshToken = await _db.RefreshTokens.FirstOrDefaultAsync(t => t.UserId == user.Id);
+        if (refreshToken == null)
+        {
+            _db.RefreshTokens.Add(new RefreshToken
+            {
+                UserId = user.Id,
+                HashedToken = _tokenService.HashToken(rawRefreshToken),
+                ExpiredAt = DateTime.UtcNow.AddDays(30)
+            });
+        }
+        else
+        {
+            if (refreshToken.ExpiredAt <= DateTime.UtcNow.AddDays(5))
+            {
+                refreshToken.HashedToken = _tokenService.HashToken(rawRefreshToken);
+                refreshToken.ExpiredAt = DateTime.UtcNow.AddDays(30);
+            }
+        }
         await _db.SaveChangesAsync();
 
-        (string token, DateTime expiresAt) = _tokenService.GenAccessToken(user);
+        Response.Cookies.Append("RefreshToken", rawRefreshToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTimeOffset.UtcNow.AddDays(30),
+            Path = "/api/auth/refresh"
+        });
 
         return Ok(new LoginResponse(token, expiresAt));
     }
