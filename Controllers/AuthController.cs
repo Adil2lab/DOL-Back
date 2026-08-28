@@ -4,7 +4,6 @@ using DOL.Services;
 using DOL.Data;
 using DOL.Models;
 using DOL.Models.Dtos;
-using Microsoft.AspNetCore.Authorization;
 
 namespace DOL.Controllers;
 
@@ -23,14 +22,13 @@ public class AuthController : ControllerBase
         _tokenService = tokenService;
     }
 
-    [Authorize(Roles = "Admin")]
     [HttpGet("byEmail/{email}")]
     public async Task<ActionResult<UserResponse>> GetUserByEmail([FromRoute] string email)
     {
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == email);
 
         if (user == null) return NotFound(new { error = "No email found" });
-        return Ok(new UserResponse(user.Id, user.Email, user.Nid, user.IsMerchant));
+        return Ok(new UserResponse(user.Id, user.Email, user.IsMerchant));
     }
 
     [HttpPost("login")]
@@ -76,11 +74,8 @@ public class AuthController : ControllerBase
         }
         else
         {
-            if (refreshToken.ExpiredAt <= DateTime.UtcNow.AddDays(5))
-            {
-                refreshToken.HashedToken = _tokenService.HashToken(rawRefreshToken);
-                refreshToken.ExpiredAt = DateTime.UtcNow.AddDays(30);
-            }
+            refreshToken.HashedToken = _tokenService.HashToken(rawRefreshToken);
+            refreshToken.ExpiredAt = DateTime.UtcNow.AddDays(30);   
         }
         await _db.SaveChangesAsync();
 
@@ -99,7 +94,7 @@ public class AuthController : ControllerBase
     [HttpPost("refresh")]
     public async Task<ActionResult<LoginResponse>> Refresh()
     {
-        if (!Request.Cookies.TryGetValue("refreshToken", out var rawToken) || rawToken == null)
+        if (!Request.Cookies.TryGetValue("RefreshToken", out var rawToken) || rawToken == null)
             return Unauthorized(new { error = "No refresh token provided" });
 
         string tokenHash = _tokenService.HashToken(rawToken);
@@ -129,6 +124,6 @@ public class AuthController : ControllerBase
         _db.Users.Add(user);
         await _db.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetUserByEmail), new { email = user.Email}, new UserResponse(user.Id, user.Email, user.Nid, user.IsMerchant));
+        return CreatedAtAction(nameof(GetUserByEmail), new { email = user.Email}, new UserResponse(user.Id, user.Email, user.IsMerchant));
     }
 }
