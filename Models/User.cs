@@ -20,7 +20,7 @@ public class User
     /// <summary>
     /// User email address. Required and limited to 255 characters.
     /// </summary>
-    [Required, MaxLength(255)]
+    [Required, MaxLength(255), EmailAddress]
     public string Email { get; set; } = string.Empty;
 
     /// <summary>
@@ -32,7 +32,7 @@ public class User
     [Required]
     public string Nid { get; set; } = string.Empty;
 
-    [Required, MaxLength(255)]
+    [Required, MaxLength(20), Phone]
     public string MobileNumber { get; set; } = string.Empty;
 
     /// <summary>
