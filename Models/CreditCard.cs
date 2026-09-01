@@ -1,4 +1,4 @@
-﻿using DOL.enums;
+﻿using DOL.Models.enums;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -17,11 +17,17 @@ public class CreditCard
     /// </summary>
     public Guid Id { get; set; } = Guid.NewGuid();
 
+    [Required]
+    public Guid PublicId { get; set; } = Guid.NewGuid();
+
+    [ForeignKey(nameof(PublicId))]
+    public PublicCardLobby? PublicCard { get; set; }
+
     /// <summary>
     /// Friendly name for the card (e.g., "Personal Visa", "Work Card").
     /// Required and defaults to an empty string to avoid nulls.
     /// </summary>
-    [Required]
+    [Required, MaxLength(25)]
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
@@ -43,9 +49,7 @@ public class CreditCard
     /// - Persisted as <c>varchar(4)</c> in the database.
     /// - Must be exactly 4 numeric digits (validated by <see cref="RegularExpressionAttribute"/>).
     /// </summary>
-    [Column(TypeName = "varchar(4)")]
-    [StringLength(4, MinimumLength = 4)]
-    [RegularExpression(@"^\d{4}$")]
+    [Column(TypeName = "varchar(4)"), StringLength(4, MinimumLength = 4), RegularExpression(@"^\d{4}$")]
     public string Last4Number { get; set; } = string.Empty;
 
     /// <summary>
@@ -59,4 +63,9 @@ public class CreditCard
     /// The card provider (enum) indicating the network or issuing type (e.g., Visa, MasterCard).
     /// </summary>
     public CardProvider CardProvider { get; set; }
+
+    public DateTime LastTransactionedAt { get; set; } = DateTime.UtcNow;
+
+    public IssuerBanks Issuer { get; set; }
+
 }

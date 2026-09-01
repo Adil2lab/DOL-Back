@@ -1,4 +1,4 @@
-﻿namespace DOL.enums;
+﻿namespace DOL.Models.enums;
 
 public enum CardProvider
 {
