@@ -30,6 +30,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddAuthorization();
 
+builder.Services.AddFido2(options =>
+{
+    options.ServerDomain = "localhost";
+    options.ServerName = "DOL";
+    options.Origins = new HashSet<string>
+    {
+        "https://localhost:7196",   // your backend's HTTPS profile
+        "https://localhost:3000"    // your Next.js dev server — adjust if it runs elsewhere
+    };
+});
+
 builder.Services.AddControllers();
 
 builder.Services.AddOpenApi();

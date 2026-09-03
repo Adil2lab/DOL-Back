@@ -11,8 +11,9 @@ public class AppDbContext : DbContext
     public DbSet<PaymentToken> PaymentTokens => Set<PaymentToken>();
     public DbSet<LedgerEntry> LedgerEntries => Set<LedgerEntry>();
     public DbSet<CreditCard> CreditCards => Set<CreditCard>();
-
+    public DbSet<PublicCardLobby> PublicCards => Set<PublicCardLobby>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<WebAuthnCred> WebAuthnCreds => Set<WebAuthnCred>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

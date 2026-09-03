@@ -30,10 +30,9 @@ public class CardController : ControllerBase
     }
 
     [HttpPost("create")]
-    public async Task<ActionResult> CreateCard([FromBody] CreditCard card)
+    public async Task<ActionResult> CreateCard([FromBody] CardRequest req)
     {
-        _db.CreditCards.Add(card);
-        await _db.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetSingularData), new { id = card.PublicId }, card);
+        
+        return Ok();
     }
 }
